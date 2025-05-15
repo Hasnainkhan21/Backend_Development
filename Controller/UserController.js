@@ -68,7 +68,7 @@ exports.createNewUser = async (req, res) =>{
             return res.status(404).json({warn:"Password already existing"})
         }
         else{
-            
+            // bcrypt
             const hashedPassword = await bcrypt.hash(Password, 10);
             
             const newuser = await user.create({
@@ -100,3 +100,83 @@ exports.getAllUser = async (req, res) =>{
         console.log(error)
     }
 }
+
+// Delete
+
+exports.deleteUser = async (req, res) =>{
+    try{
+        const User_Id = req.params.UserId;
+        const delete_User = await user.findByIdAndDelete(User_Id);
+        if(!delete_User){
+            return res.status(404).json({wrn : "User not found"})
+        } else{
+            return res.status(202).json({msg: "User Deleted Succefully", deletedUser: delete_User})
+        }
+
+    }catch(error){
+        console.log(error)
+    }
+}
+
+//update user
+exports.updateUser = async (req, res) =>{
+    try{
+        const User_Id = req.params.UserId;
+        const update_User = await user.findByIdAndUpdate(User_Id,req.body,{new:true});
+        if(!update_User){
+            return res.status(404).json({wrn : "User not found"})
+        } else{
+            return res.status(202).json({msg: "User Updated Succefully", updatedUser: update_User})
+        }
+
+    }catch(error){
+        console.log(error)
+    }
+}
+
+// Authroute
+const jwt = require('jsonwebtoken')
+
+exports.authroute = async (req, res) => {
+    try {
+        const { email, password } = req.body;
+
+        if (!email) {
+            return res.status(400).json({ wrn: "Email is required" });
+        } 
+         if (!password) {
+            return res.status(400).json({ wrn: "Password is required" });
+        }
+
+        const find_User = await user.findOne({ email });
+
+        if (!find_User) {
+            return res.status(401).json({ wrn: "User not found" });
+        }
+
+        const find_Password = await bcrypt.compare(password, find_User.Password);
+        if (!find_Password) {
+            return res.status(402).json({ wrn: "Password is incorrect" });
+        }
+
+        const Login_User_token = jwt.sign(
+            {
+                userId: find_User._id,
+                userName: find_User.username,
+                email: find_User.email,
+            },
+            "abcdfghjk7123rv",
+            { expiresIn: "1d" }
+        );
+
+        return res.status(200).json({
+            msg: "User login successful",
+            LoginUser: find_User,
+            User_Token: Login_User_token,
+        });
+
+    } catch (error) {
+        console.log(error);
+        return res.status(500).json({ err: "Internal server error" });
+    }
+};
