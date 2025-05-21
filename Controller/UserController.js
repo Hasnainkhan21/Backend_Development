@@ -43,22 +43,22 @@ exports.createNewUser = async (req, res) =>{
         const passwordRegex = /^(?=.*[A-Za-z])(?=.*\d)[A-Za-z\d]{6,}$/;
 
 
-        const {username, email, Password} = req.body;
+        const {userName, email, password} = req.body;
 
 
         const existEmail = await user.findOne({email});
-        const existUsername = await user.findOne({username});
-        const existPassword = await user.findOne({Password});
+        const existUsername = await user.findOne({userName});
+        const existPassword = await user.findOne({password});
         
-        if (!username) {
+        if (!userName) {
             return res.status(404).json({warn:"Username is required"})
         }else if(!email){
             return res.status(404).json({warn:"Email is required"})
-        }else if(!Password){
+        }else if(!password){
             return res.status(404).json({warn:"Password is required"})
         } else if(!emailRegex.test(email)){
             return res.status(404).json({warn:"email is not corrected"})
-        } else if(!passwordRegex.test(Password)){
+        } else if(!passwordRegex.test(password)){
              return res.status(404).json({warn:"password should 6 elements and contains letters and alphabets"})
         }else if(existEmail){
            return res.status(404).json({warn:"email already existing"})
@@ -69,12 +69,12 @@ exports.createNewUser = async (req, res) =>{
         }
         else{
             // bcrypt
-            const hashedPassword = await bcrypt.hash(Password, 10);
+            const hashedPassword = await bcrypt.hash(password, 10);
             
             const newuser = await user.create({
-                username,
+                userName,
                 email,
-                Password: hashedPassword
+                password: hashedPassword
             });
         console.log("Save Date", newuser)
         return res.status(202).json({msg: "User Created Succefully", user:newuser})
