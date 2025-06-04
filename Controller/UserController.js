@@ -47,8 +47,6 @@ exports.createNewUser = async (req, res) =>{
 
 
         const existEmail = await user.findOne({email});
-        const existUsername = await user.findOne({userName});
-        const existPassword = await user.findOne({password});
         
         if (!userName) {
             return res.status(404).json({warn:"Username is required"})
@@ -62,10 +60,6 @@ exports.createNewUser = async (req, res) =>{
              return res.status(404).json({warn:"password should 6 elements and contains letters and alphabets"})
         }else if(existEmail){
            return res.status(404).json({warn:"email already existing"})
-        }else if(existUsername){
-                return res.status(404).json({warn:"Username already existing"})
-        }else if(existPassword){
-            return res.status(404).json({warn:"Password already existing"})
         }
         else{
             // bcrypt
@@ -148,13 +142,13 @@ exports.authroute = async (req, res) => {
             return res.status(400).json({ wrn: "Password is required" });
         }
 
-        const find_User = await user.findOne({ email });
+        const find_User = await user.findOne({ email});
 
         if (!find_User) {
             return res.status(401).json({ wrn: "User not found" });
         }
 
-        const find_Password = await bcrypt.compare(password, find_User.Password);
+        const find_Password = await bcrypt.compare(password, find_User.password);
         if (!find_Password) {
             return res.status(402).json({ wrn: "Password is incorrect" });
         }
@@ -162,7 +156,7 @@ exports.authroute = async (req, res) => {
         const Login_User_token = jwt.sign(
             {
                 userId: find_User._id,
-                userName: find_User.username,
+                userName: find_User.userName,
                 email: find_User.email,
             },
             "abcdfghjk7123rv",
