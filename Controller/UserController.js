@@ -1,41 +1,7 @@
-// exports.getMovieByIndex = async(req, res) => {
-//     let Movies = [
-//         {
-//             title: "Dilwale",
-//             Hero: "Shahrukh Khan",
-//             Heroin: "Kajul",
-//             Industry: "Bollywood"
-//         },
-//         {
-//             title: "Ek Tha Tiger",
-//             Hero: "Salman Khan",
-//             Heroin: "Kathrina Kaif",
-//             Industry: "Bollywood"
-//         },
-//         {
-//             title: "Imitation Game",
-//             Hero: "Chris Hemsworth",
-//             Heroin: "Alexandra Daddario",
-//             Industry: "Hollywood"
-//         }
-//     ];
-
-//     const index = parseInt(req.params.index); 
-
-//     if (index >= 0 && index < Movies.length) {
-//         res.send(Movies[index]);
-//     } else {
-//         res.status(404).send({ msg: "Movie not found" }); 
-//     }
-// };
-
-
-// exports.getUserName = async(req,res) =>{
-//     res.send({name:"User is Hasnain"})
-// }
-
 const user = require("../Models/userModel");   //connect with user table
 const bcrypt = require('bcrypt');
+
+
 exports.createNewUser = async (req, res) =>{
     try{
         
