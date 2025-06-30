@@ -1,48 +1,47 @@
 const user = require("../Models/userModel");   //connect with user table
 const bcrypt = require('bcrypt');
 
+exports.createNewUser = async (req, res) => {
+  try {
+    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+    const passwordRegex = /^(?=.*[A-Za-z])(?=.*\d)[A-Za-z\d]{6,}$/;
 
-exports.createNewUser = async (req, res) =>{
-    try{
-        
-        const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-        const passwordRegex = /^(?=.*[A-Za-z])(?=.*\d)[A-Za-z\d]{6,}$/;
+    const { userName, email, password } = req.body;
 
+    const existEmail = await user.findOne({ email });
 
-        const {userName, email, password} = req.body;
-
-
-        const existEmail = await user.findOne({email});
-        
-        if (!userName) {
-            return res.status(404).json({warn:"Username is required"})
-        }else if(!email){
-            return res.status(404).json({warn:"Email is required"})
-        }else if(!password){
-            return res.status(404).json({warn:"Password is required"})
-        } else if(!emailRegex.test(email)){
-            return res.status(404).json({warn:"email is not corrected"})
-        } else if(!passwordRegex.test(password)){
-             return res.status(404).json({warn:"password should 6 elements and contains letters and alphabets"})
-        }else if(existEmail){
-           return res.status(404).json({warn:"email already existing"})
-        }
-        else{
-            // bcrypt
-            const hashedPassword = await bcrypt.hash(password, 10);
-            
-            const newuser = await user.create({
-                userName,
-                email,
-                password: hashedPassword
-            });
-        console.log("Save Date", newuser)
-        return res.status(202).json({msg: "User Created Succefully", user:newuser})
-        }
-    } catch(error){
-        console.log(error)
+    if (!userName) {
+      return res.status(400).json({ warn: "Username is required" });
+    } else if (!email) {
+      return res.status(400).json({ warn: "Email is required" });
+    } else if (!password) {
+      return res.status(400).json({ warn: "Password is required" });
+    } else if (!emailRegex.test(email)) {
+      return res.status(400).json({ warn: "Invalid email format" });
+    } else if (!passwordRegex.test(password)) {
+      return res.status(400).json({
+        warn: "Password must be at least 6 characters and contain letters and numbers",
+      });
+    } else if (existEmail) {
+      return res.status(409).json({ warn: "Email already exists" });
     }
-}
+
+    const hashedPassword = await bcrypt.hash(password, 10);
+
+    const newUser = await user.create({
+      userName,
+      email,
+      password: hashedPassword,
+    });
+
+    console.log("Saved User:", newUser);
+    return res.status(201).json({ msg: "User Created Successfully", user: newUser });
+  } catch (error) {
+    console.error("Server Error:", error);
+    return res.status(500).json({ error: "Internal Server Error" });
+  }
+};
+
 
 exports.getAllUser = async (req, res) =>{
     try{
@@ -95,48 +94,47 @@ exports.updateUser = async (req, res) =>{
 }
 
 // Authroute
-const jwt = require('jsonwebtoken')
+const jwt = require('jsonwebtoken');// Adjust path if needed
 
 exports.authroute = async (req, res) => {
-    try {
-        const { email, password } = req.body;
+  try {
+    const { email, password } = req.body;
 
-        if (!email) {
-            return res.status(400).json({ wrn: "Email is required" });
-        } 
-         if (!password) {
-            return res.status(400).json({ wrn: "Password is required" });
-        }
-
-        const find_User = await user.findOne({ email});
-
-        if (!find_User) {
-            return res.status(401).json({ wrn: "User not found" });
-        }
-
-        const find_Password = await bcrypt.compare(password, find_User.password);
-        if (!find_Password) {
-            return res.status(402).json({ wrn: "Password is incorrect" });
-        }
-
-        const Login_User_token = jwt.sign(
-            {
-                userId: find_User._id,
-                userName: find_User.userName,
-                email: find_User.email,
-            },
-            "abcdfghjk7123rv",
-            { expiresIn: "1d" }
-        );
-
-        return res.status(200).json({
-            msg: "User login successful",
-            LoginUser: find_User,
-            User_Token: Login_User_token,
-        });
-
-    } catch (error) {
-        console.log(error);
-        return res.status(500).json({ err: "Internal server error" });
+    if (!email) {
+      return res.status(400).json({ wrn: "Email is required" });
     }
+    if (!password) {
+      return res.status(400).json({ wrn: "Password is required" });
+    }
+
+    const find_User = await user.findOne({ email });
+    if (!find_User) {
+      return res.status(401).json({ wrn: "User not found" });
+    }
+
+    const isPasswordCorrect = await bcrypt.compare(password, find_User.password);
+    if (!isPasswordCorrect) {
+      return res.status(401).json({ wrn: "Incorrect password" });
+    }
+
+    const token = jwt.sign(
+      {
+        userId: find_User._id,
+        userName: find_User.userName,
+        email: find_User.email,
+      },
+      process.env.JWT_SECRET || "abcdfghjk7123rv", // Use .env for production
+      { expiresIn: "1d" }
+    );
+
+    return res.status(200).json({
+      msg: "User login successful",
+      LoginUser: find_User,
+      User_Token: token,
+    });
+  } catch (error) {
+    console.error("Login error:", error);
+    return res.status(500).json({ err: "Internal server error" });
+  }
 };
+
